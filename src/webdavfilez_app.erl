@@ -25,7 +25,6 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    application:ensure_all_started(hackney),
     ensure_httpc_profile(),
     case webdavfilez_sup:start_link() of
         {ok, Pid} ->
