@@ -88,70 +88,70 @@
 %% @doc Queue a file dowloader and call ready_fun when finished.
 -spec queue_get(config(), url(), ready_fun()) -> queue_reply().
 queue_get(Config, Url, ReadyFun) ->
-    webdavfilez_jobs_sup:queue({get, Config, Url, ReadyFun}).
+    webdavfilez_jobs_sup:queue({get, Config, map_url(Url), ReadyFun}).
 
 
 %% @doc Queue a named file dowloader and call ready_fun when finished.
 %%      Names must be unique, duplicates are refused with <tt>{error, {already_started, _}}</tt>.
 -spec queue_get_id(any(), config(), url(), ready_fun()) -> queue_reply().
 queue_get_id(JobId, Config, Url, ReadyFun) ->
-    webdavfilez_jobs_sup:queue(JobId, {get, Config, Url, ReadyFun}).
+    webdavfilez_jobs_sup:queue(JobId, {get, Config, map_url(Url), ReadyFun}).
 
 
 %% @doc Queue a file uploader. The data can be a binary or a filename.
 -spec queue_put(config(), url(), put_data()) -> queue_reply().
 queue_put(Config, Url, What) ->
-    queue_put(Config, Url, What, undefined).
+    queue_put(Config, map_url(Url), What, undefined).
 
 
 %% @doc Queue a file uploader and call ready_fun when finished.
 -spec queue_put(config(), url(), put_data(), ready_fun()) -> queue_reply().
 queue_put(Config, Url, What, ReadyFun) ->
-    queue_put(Config, Url, What, ReadyFun, []).
+    queue_put(Config, map_url(Url), What, ReadyFun, []).
 
 
 %% @doc Queue a file uploader and call ready_fun when finished. Options include
 %% the <tt>acl</tt> setting and <tt>content_type</tt> for the file.
 -spec queue_put(config(), url(), put_data(), ready_fun(), put_opts()) -> queue_reply().
 queue_put(Config, Url, What, ReadyFun, Opts) ->
-    webdavfilez_jobs_sup:queue({put, Config, Url, What, ReadyFun, Opts}).
+    webdavfilez_jobs_sup:queue({put, Config, map_url(Url), What, ReadyFun, Opts}).
 
 %% @doc Start a named file uploader. Names must be unique, duplicates are refused with
 %% <tt>{error, {already_started, _}}</tt>.
 -spec queue_put_id(any(), config(), url(), put_data(), ready_fun()) -> queue_reply().
 queue_put_id(JobId, Config, Url, What, ReadyFun) ->
-    webdavfilez_jobs_sup:queue(JobId, {put, Config, Url, What, ReadyFun}).
+    webdavfilez_jobs_sup:queue(JobId, {put, Config, map_url(Url), What, ReadyFun}).
 
 
 %% @doc Async delete a file on WebDAV
 -spec queue_delete(config(), url()) -> queue_reply().
 queue_delete(Config, Url) ->
-    queue_delete(Config, Url, undefined).
+    queue_delete(Config, map_url(Url), undefined).
 
 %% @doc Async delete a file on WebDAV, call ready_fun when ready.
 -spec queue_delete(config(), url(), ready_fun()) -> queue_reply().
 queue_delete(Config, Url, ReadyFun) ->
-    webdavfilez_jobs_sup:queue({delete, Config, Url, ReadyFun}).
+    webdavfilez_jobs_sup:queue({delete, Config, map_url(Url), ReadyFun}).
 
 
 %% @doc Queue a named file deletion process, call ready_fun when ready.
 -spec queue_delete_id(any(), config(), url(), ready_fun()) -> queue_reply().
 queue_delete_id(JobId, Config, Url, ReadyFun) ->
-    webdavfilez_jobs_sup:queue(JobId, {delete, Config, Url, ReadyFun}).
+    webdavfilez_jobs_sup:queue(JobId, {delete, Config, map_url(Url), ReadyFun}).
 
 
 %% @doc Queue a file downloader that will stream chunks to the given stream_fun. The
 %% default block size for the chunks is 64KB.
 -spec queue_stream(config(), url(), stream_fun()) -> queue_reply().
 queue_stream(Config, Url, StreamFun) ->
-    webdavfilez_jobs_sup:queue({stream, Config, Url, StreamFun}).
+    webdavfilez_jobs_sup:queue({stream, Config, map_url(Url), StreamFun}).
 
 
 %% @doc Queue a named file downloader that will stream chunks to the given stream_fun. The
 %% default block size for the chunks is 64KB.
 -spec queue_stream_id(any(), config(), url(), stream_fun()) -> queue_reply().
 queue_stream_id(JobId, Config, Url, StreamFun) ->
-    webdavfilez_jobs_sup:queue(JobId, {stream, Config, Url, StreamFun}).
+    webdavfilez_jobs_sup:queue(JobId, {stream, Config, map_url(Url), StreamFun}).
 
 
 %%% Normal API - blocking on the process
@@ -164,7 +164,7 @@ get(Config, Url) ->
     Result = jobs:run(
         webdavfilez_jobs,
         fun() ->
-            webdavfilez_request:request(Config, get, Url, [], [])
+            webdavfilez_request:request(Config, get, map_url(Url), [], [])
         end),
     case Result of
         {ok, {{_Http, 200, _Ok}, Headers, Body}} ->
@@ -179,7 +179,7 @@ delete(Config, Url) ->
     ret_status(jobs:run(
         webdavfilez_jobs,
         fun() ->
-            webdavfilez_request:request(Config, delete, Url, [], [])
+            webdavfilez_request:request(Config, delete, map_url(Url), [], [])
         end)).
 
 
@@ -197,7 +197,8 @@ put(Config, Url, {data, Data}, Opts) ->
 put(Config, Url, {filename, Filename}, Opts) ->
     Size = filelib:file_size(Filename),
     put(Config, Url, {filename, Size, Filename}, Opts);
-put(Config, Url, {filename, Size, Filename}, Opts) ->
+put(Config, Url0, {filename, Size, Filename}, Opts) ->
+    Url = map_url(Url0),
     Hs = [
           {"Content-Length", integer_to_list(Size)}
           | opts_to_headers(Opts)
@@ -246,7 +247,7 @@ create_bucket(Config, Url) ->
 %% @doc Create a directory (bucket) at the URL, ignore acl options.
 -spec create_bucket( config(), url(), put_opts() ) -> sync_reply().
 create_bucket(Config, Url, _Opts) ->
-    webdavfilez_mkdir:mkdir(Config, Url).
+    webdavfilez_mkdir:mkdir(Config, map_url(Url)).
 
 opts_to_headers(Opts) ->
     Hs = lists:foldl(
@@ -271,13 +272,24 @@ opts_to_headers(Opts) ->
 
 -spec stream( config(), url(), stream_fun() ) -> sync_reply().
 stream(Config, Url, Fun) when is_function(Fun,1) ->
-    webdavfilez_request:stream_to_fun(Config, Url, Fun);
+    webdavfilez_request:stream_to_fun(Config, map_url(Url), Fun);
 stream(Config, Url, {_M,_F,_A} = MFA) ->
-    webdavfilez_request:stream_to_fun(Config, Url, MFA);
+    webdavfilez_request:stream_to_fun(Config, map_url(Url), MFA);
 stream(Config, Url, Pid) when is_pid(Pid) ->
-    webdavfilez_request:stream_to_fun(Config, Url, Pid).
+    webdavfilez_request:stream_to_fun(Config, map_url(Url), Pid).
 
 ret_status({ok, Rest}) ->
     webdavfilez_request:http_status(Rest);
 ret_status({error, _} = Error) ->
     Error.
+
+map_url(<<"webdavs:", Rest/binary>>) -> <<"https:", Rest/binary>>;
+map_url(<<"webdav:", Rest/binary>>) -> <<"http:", Rest/binary>>;
+map_url(<<"davs:", Rest/binary>>) -> <<"https:", Rest/binary>>;
+map_url(<<"dav:", Rest/binary>>) -> <<"http:", Rest/binary>>;
+map_url("webdavs:" ++ Rest) -> "https:" ++ Rest;
+map_url("webdav:" ++ Rest) -> "http:" ++ Rest;
+map_url("davs:" ++ Rest) -> "https:" ++ Rest;
+map_url("dav:" ++ Rest) -> "http:" ++ Rest;
+map_url(Url) -> Url.
+
