@@ -123,12 +123,12 @@ queue_put_id(JobId, Config, Url, What, ReadyFun) ->
     webdavfilez_jobs_sup:queue(JobId, {put, Config, Url, What, ReadyFun}).
 
 
-%% @doc Async delete a file on S3
+%% @doc Async delete a file on WebDAV
 -spec queue_delete(config(), url()) -> queue_reply().
 queue_delete(Config, Url) ->
     queue_delete(Config, Url, undefined).
 
-%% @doc Async delete a file on S3, call ready_fun when ready.
+%% @doc Async delete a file on WebDAV, call ready_fun when ready.
 -spec queue_delete(config(), url(), ready_fun()) -> queue_reply().
 queue_delete(Config, Url, ReadyFun) ->
     webdavfilez_jobs_sup:queue({delete, Config, Url, ReadyFun}).

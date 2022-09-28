@@ -31,11 +31,11 @@
 %% Supervisor callbacks
 -export([init/1]).
 
-queue(S3Job) ->
-    queue(erlang:make_ref(), S3Job).
+queue(WebDAVJob) ->
+    queue(erlang:make_ref(), WebDAVJob).
 
-queue(Ref, S3Job) ->
-    case supervisor:start_child(?MODULE, [Ref, S3Job]) of
+queue(Ref, WebDAVJob) ->
+    case supervisor:start_child(?MODULE, [Ref, WebDAVJob]) of
         {ok, Pid} -> {ok, Ref, Pid};
         {error, {already_started, Pid}} -> {ok, Ref, Pid}
     end.

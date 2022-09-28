@@ -58,7 +58,7 @@ Example:
 {ok,#Ref<0.0.0.3684>,<0.854.0>}
 ```
 
-The returned `JobPid` is the pid of the process in the s3filez queue supervisor.
+The returned `JobPid` is the pid of the process in the webdavfilez queue supervisor.
 The callback can be a function (arity 2), `{M,F,A}` or a pid.
 
 If the callback is a pid then it will receive the message `{webdavfilez_done, ReqId, Result}`.
