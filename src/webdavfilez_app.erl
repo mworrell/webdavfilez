@@ -25,6 +25,7 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
+    application:ensure_all_started(hackney),
     ensure_httpc_profile(),
     case webdavfilez_sup:start_link() of
         {ok, Pid} ->
@@ -57,5 +58,5 @@ ensure_queue() ->
 max_connections() ->
     case application:get_env(webdavfilez, max_connections) of
         {ok, N} when is_integer(N) -> N;
-        undefined -> 10
+        undefined -> 20
     end.

@@ -1,0 +1,4 @@
+%% encoding: UTF-8
+{application,webdavfilez}.
+{modules,[webdavfilez,webdavfilez_app,webdavfilez_job,webdavfilez_jobs_sup,
+          webdavfilez_mkdir,webdavfilez_request,webdavfilez_sup]}.

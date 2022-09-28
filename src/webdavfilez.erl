@@ -193,7 +193,7 @@ put(Config, Url, Payload) ->
 -spec put( config(), url(), put_data(), put_opts() ) -> sync_reply().
 put(Config, Url, {data, Data}, Opts) ->
     Hs = opts_to_headers(Opts),
-    ret_status(webdavfilez_request:request_with_body(Config, put, Url, Hs, Data));
+    ret_status(webdavfilez_request:request_with_body(Config, put, map_url(Url), Hs, Data));
 put(Config, Url, {filename, Filename}, Opts) ->
     Size = filelib:file_size(Filename),
     put(Config, Url, {filename, Size, Filename}, Opts);
