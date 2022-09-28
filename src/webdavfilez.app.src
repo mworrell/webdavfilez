@@ -1,0 +1,25 @@
+{application, webdavfilez,
+ [
+  {description, "Stream and file interface for WebDAV storage"},
+  {vsn, "git"},
+  {registered, []},
+  {mod, {webdavfilez_app, []}},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  crypto,
+                  public_key,
+                  ssl,
+                  inets,
+                  jobs,
+                  gproc,
+                  hackney,
+                  zotonic_stdlib,
+                  tls_certificate_check
+                 ]},
+  {env, [
+      {max_connections, 10}
+  ]},
+  {licenses, ["Apache 2.0"]},
+  {links, [{"GitHub", "https://github.com/mworrell/webdavfilez"}]}
+ ]}.
