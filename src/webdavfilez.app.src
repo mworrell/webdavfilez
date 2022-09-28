@@ -1,6 +1,6 @@
 {application, webdavfilez,
  [
-  {description, "Stream and file interface for WebDAV storage"},
+  {description, "Simple WebDAV http interface to get, put and stream files."},
   {vsn, "git"},
   {registered, []},
   {mod, {webdavfilez_app, []}},
