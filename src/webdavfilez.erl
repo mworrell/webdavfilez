@@ -207,7 +207,7 @@ put(Config, Url0, {filename, Size, Filename}, Opts) ->
     case Ret of
         ok ->
             ok;
-        {error, 409} ->
+        {error, Err} when Err =:= 409; Err =:= closed ->
             % Directory might not exist
             case webdavfilez_mkdir:parent_dir(Url) of
                 {ok, UrlParent} ->
@@ -219,7 +219,7 @@ put(Config, Url0, {filename, Size, Filename}, Opts) ->
                             Error
                     end;
                 {error, _} ->
-                    {error, 409}
+                    {error, Err}
             end;
         {error, 405} ->
             {error, epath};
@@ -228,8 +228,10 @@ put(Config, Url0, {filename, Size, Filename}, Opts) ->
     end.
 
 put_body_file({file, Filename}) ->
-    {ok, FD} = file:open(Filename, [read,binary]),
-    put_body_file({fd, FD});
+    case file:open(Filename, [read,binary]) of
+        {ok, FD} -> put_body_file({fd, FD});
+        {error, _} -> eof
+    end;
 put_body_file({fd, FD}) ->
     case file:read(FD, ?BLOCK_SIZE) of
         eof ->
@@ -255,7 +257,7 @@ opts_to_headers(Opts) ->
                     % Ignore S3 ACL options
                     Hs;
               ({content_type, CT}, Hs) ->
-                    [{"Content-Type", CT} | Hs];
+                    [{"Content-Type", to_list(CT)} | Hs];
               (Unknown, _) ->
                     throw({error, {unknown_option, Unknown}})
            end,
@@ -292,4 +294,7 @@ map_url("webdav:" ++ Rest) -> "http:" ++ Rest;
 map_url("davs:" ++ Rest) -> "https:" ++ Rest;
 map_url("dav:" ++ Rest) -> "http:" ++ Rest;
 map_url(Url) -> Url.
+
+to_list(B) when is_binary(B) -> binary_to_list(B);
+to_list(L) when is_list(L) -> L.
 
