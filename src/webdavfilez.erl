@@ -207,7 +207,7 @@ put(Config, Url0, {filename, Size, Filename}, Opts) ->
     case Ret of
         ok ->
             ok;
-        {error, 409} ->
+        {error, Err} when Err =:= 409; Err =:= closed ->
             % Directory might not exist
             case webdavfilez_mkdir:parent_dir(Url) of
                 {ok, UrlParent} ->

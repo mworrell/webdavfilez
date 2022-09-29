@@ -180,13 +180,12 @@ opts(Host) ->
     ].
 
 ssl_options(Host) ->
-    [ {verify, verify_none} ].
-    % case z_ip_address:is_local_name(Host) of
-    %     true ->
-    %         [ {verify, verify_none} ];
-    %     false ->
-    %         tls_certificate_check:options(Host)
-    % end.
+    case z_ip_address:is_local_name(Host) of
+        true ->
+            [ {verify, verify_none} ];
+        false ->
+            tls_certificate_check:options(Host)
+    end.
 
 basic_auth({Username, Password}) ->
     Username1 = unicode:characters_to_binary(Username),
