@@ -219,7 +219,7 @@ put(Config, Url0, {filename, Size, Filename}, Opts) ->
                             Error
                     end;
                 {error, _} ->
-                    {error, 409}
+                    {error, Err}
             end;
         {error, 405} ->
             {error, epath};
