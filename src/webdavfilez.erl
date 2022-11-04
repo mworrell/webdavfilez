@@ -263,6 +263,8 @@ opts_to_headers(Opts) ->
            fun({acl, _AclOption}, Hs) ->
                     % Ignore S3 ACL options
                     Hs;
+              ({content_type, undefined}, Hs) ->
+                    Hs;
               ({content_type, CT}, Hs) ->
                     [{"Content-Type", to_list(CT)} | Hs];
               (Unknown, _) ->
