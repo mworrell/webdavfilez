@@ -191,19 +191,26 @@ put(Config, Url, Payload) ->
 
 %% @doc Put a binary or file to the given url. Set options for acl and/or content_type.
 -spec put( config(), url(), put_data(), put_opts() ) -> sync_reply().
-put(Config, Url, {data, Data}, Opts) ->
-    Hs = opts_to_headers(Opts),
-    ret_status(webdavfilez_request:request_with_body(Config, put, map_url(Url), Hs, Data));
+put(Config, Url0, {data, Data}, Opts) ->
+    Url = map_url(Url0),
+    Hs = [
+        {"Content-Length", size(Data)}
+        | opts_to_headers(Opts)
+    ],
+    put_1(Config, Url, Hs, Data);
 put(Config, Url, {filename, Filename}, Opts) ->
     Size = filelib:file_size(Filename),
     put(Config, Url, {filename, Size, Filename}, Opts);
 put(Config, Url0, {filename, Size, Filename}, Opts) ->
     Url = map_url(Url0),
     Hs = [
-          {"Content-Length", integer_to_list(Size)}
-          | opts_to_headers(Opts)
+        {"Content-Length", integer_to_list(Size)}
+        | opts_to_headers(Opts)
     ],
-    Ret = ret_status(webdavfilez_request:request_with_body(Config, put, Url, Hs, {fun ?MODULE:put_body_file/1, {file, Filename}})),
+    put_1(Config, Url, Hs, {fun ?MODULE:put_body_file/1, {file, Filename}}).
+
+put_1(Config, Url, Hs, Data) ->
+    Ret = ret_status(webdavfilez_request:request_with_body(Config, put, Url, Hs, Data)),
     case Ret of
         ok ->
             ok;
@@ -214,7 +221,7 @@ put(Config, Url0, {filename, Size, Filename}, Opts) ->
                     case webdavfilez_mkdir:mkdir(Config, UrlParent) of
                         ok ->
                             % Retry
-                            ret_status(webdavfilez_request:request_with_body(Config, put, Url, Hs, {fun ?MODULE:put_body_file/1, {file, Filename}}));
+                            ret_status(webdavfilez_request:request_with_body(Config, put, map_url(Url), Hs, Data));
                         {error, _} = Error ->
                             Error
                     end;
