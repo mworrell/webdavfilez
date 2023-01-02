@@ -88,7 +88,9 @@ check_if_exists(Cfg, Url) ->
         {ok, 403, _, _} ->
             {error, eaccess};
         {ok, Status, _, _} ->
-            {error, Status}
+            {error, Status};
+        {error, _} = Error ->
+            Error
     end.
 
 recursive_mkdir(Cfg, Url) ->

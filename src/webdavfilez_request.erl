@@ -41,15 +41,20 @@
 
 request(Config, Method, Url, Headers, Options) ->
     Host = hostname(Url),
-    Date = httpd_util:rfc1123_date(),
-    AllHeaders = [
-        {"Authorization", basic_auth(Config)},
-        {"Date", Date}
-        | Headers
-    ],
-    httpc:request(Method, {to_list(Url), AllHeaders},
-                  opts(Host), [{body_format, binary}|Options],
-                  httpc_webdavfilez_profile).
+    case hostname(Url) of
+        {ok, Host} ->
+            Date = httpd_util:rfc1123_date(),
+            AllHeaders = [
+                {"Authorization", basic_auth(Config)},
+                {"Date", Date}
+                | Headers
+            ],
+            httpc:request(Method, {to_list(Url), AllHeaders},
+                          opts(Host), [{body_format, binary}|Options],
+                          httpc_webdavfilez_profile);
+        {error, _} = Error ->
+            Error
+    end.
 
 request_with_body(Config, Method, Url, Headers, Body) ->
     Host = hostname(Url),
@@ -193,8 +198,12 @@ basic_auth({Username, Password}) ->
     "Basic " ++ base64:encode_to_string(<<Username1/binary, $:, Password1/binary>>).
 
 hostname(Url) ->
-    #{ host := Host } = uri_string:parse(Url),
-    to_list(Host).
+    case uri_string:parse(Url) of
+        #{ host := Host } ->
+            {ok, to_list(Host)};
+        _ ->
+            {error, url_hostname}
+    end.
 
 to_list(B) when is_binary(B) -> binary_to_list(B);
 to_list(L) when is_list(L) -> L.
