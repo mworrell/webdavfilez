@@ -40,7 +40,6 @@
 -include_lib("kernel/include/logger.hrl").
 
 request(Config, Method, Url, Headers, Options) ->
-    Host = hostname(Url),
     case hostname(Url) of
         {ok, Host} ->
             Date = httpd_util:rfc1123_date(),
@@ -57,20 +56,24 @@ request(Config, Method, Url, Headers, Options) ->
     end.
 
 request_with_body(Config, Method, Url, Headers, Body) ->
-    Host = hostname(Url),
-    {"Content-Type", ContentType} = proplists:lookup("Content-Type", Headers),
-    Date = httpd_util:rfc1123_date(),
-    Hs1 = [
-        {"Authorization", basic_auth(Config)},
-        {"Date", Date}
-        | Headers
-    ],
-    jobs:run(webdavfilez_jobs,
-             fun() ->
-                httpc:request(Method, {to_list(Url), Hs1, ContentType, Body},
-                              opts(Host), [],
-                              httpc_webdavfilez_profile)
-            end).
+    case hostname(Url) of
+        {ok, Host} ->
+            {"Content-Type", ContentType} = proplists:lookup("Content-Type", Headers),
+            Date = httpd_util:rfc1123_date(),
+            Hs1 = [
+                {"Authorization", basic_auth(Config)},
+                {"Date", Date}
+                | Headers
+            ],
+            jobs:run(webdavfilez_jobs,
+                     fun() ->
+                        httpc:request(Method, {to_list(Url), Hs1, ContentType, Body},
+                                      opts(Host), [],
+                                      httpc_webdavfilez_profile)
+                    end);
+        {error, _} = Error ->
+            Error
+    end.
 
 stream_to_fun(Config, Url, Fun) ->
     {ok, RequestId} = webdavfilez_request:request(Config, get, Url, [], [{stream,{self,once}}, {sync,false}]),
