@@ -1,9 +1,9 @@
 %% @doc WebDAV http request handler and streamer using httpc.
 %% @author Marc Worrell
-%% @copyright 2022 Marc Worrell
+%% @copyright 2022-2023 Marc Worrell
 %% @end
 
-%% Copyright 2022 Marc Worrell
+%% Copyright 2022-2023 Marc Worrell
 %%
 %% This file is provided to you under the Apache License,
 %% Version 2.0 (the "License"); you may not use this file
@@ -76,35 +76,39 @@ request_with_body(Config, Method, Url, Headers, Body) ->
     end.
 
 stream_to_fun(Config, Url, Fun) ->
-    {ok, RequestId} = webdavfilez_request:request(Config, get, Url, [], [{stream,{self,once}}, {sync,false}]),
-    receive
-        {http, {RequestId, stream_start, Headers, Pid}} ->
-            start_fun(Fun),
-            call_fun(Fun, {content_type, ct(Headers)}),
-            httpc:stream_next(Pid),
-            ?MODULE:stream_loop(RequestId, Pid, Url, Fun);
-        {http, {RequestId, {_,_,_} = HttpRet}}->
-            case http_status(HttpRet) of
-                ok ->
-                    eof_fun(Fun),
-                    ok;
-                {error, Reason} = Error ->
-                    error_fun(Fun, Reason),
-                    Error
+    case request(Config, get, Url, [], [{stream,{self,once}}, {sync,false}]) of
+        {ok, RequestId} ->
+            receive
+                {http, {RequestId, stream_start, Headers, Pid}} ->
+                    start_fun(Fun),
+                    call_fun(Fun, {content_type, ct(Headers)}),
+                    httpc:stream_next(Pid),
+                    ?MODULE:stream_loop(RequestId, Pid, Url, Fun);
+                {http, {RequestId, {_,_,_} = HttpRet}}->
+                    case http_status(HttpRet) of
+                        ok ->
+                            eof_fun(Fun),
+                            ok;
+                        {error, Reason} = Error ->
+                            error_fun(Fun, Reason),
+                            Error
+                    end;
+                {http, {RequestId, Other}} ->
+                    ?LOG_ERROR(#{
+                        text => <<"Unexpected HTTP message">>,
+                        in => webdavfilez,
+                        result => error,
+                        reason => Other,
+                        url => Url
+                    }),
+                    error_fun(Fun, Other),
+                    {error, Other}
+            after ?CONNECT_TIMEOUT ->
+                error_fun(Fun, timeout),
+                {error, timeout}
             end;
-        {http, {RequestId, Other}} ->
-            ?LOG_ERROR(#{
-                text => <<"Unexpected HTTP message">>,
-                in => webdavfilez,
-                result => error,
-                reason => Other,
-                url => Url
-            }),
-            error_fun(Fun, Other),
-            {error, Other}
-    after ?CONNECT_TIMEOUT ->
-        error_fun(Fun, timeout),
-        {error, timeout}
+        {error, _} = Error ->
+            Error
     end.
 
 %% @private
