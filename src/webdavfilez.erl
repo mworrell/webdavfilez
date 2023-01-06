@@ -194,7 +194,7 @@ put(Config, Url, Payload) ->
 put(Config, Url0, {data, Data}, Opts) ->
     Url = map_url(Url0),
     Hs = [
-        {"Content-Length", size(Data)}
+        {"Content-Length", integer_to_list(size(Data))}
         | opts_to_headers(Opts)
     ],
     put_1(Config, Url, Hs, Data);
