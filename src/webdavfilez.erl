@@ -1,10 +1,10 @@
 %% @doc WebDAV file storage. Can put, get and stream files.
 %% Uses a job queue which is regulated by "jobs".
 %% @author Marc Worrell
-%% @copyright 2022 Marc Worrell
+%% @copyright 2022-2025 Marc Worrell
 %% @end
 
-%% Copyright 2022 Marc Worrell
+%% Copyright 2022-2025 Marc Worrell
 %%
 %% This file is provided to you under the Apache License,
 %% Version 2.0 (the "License"); you may not use this file
@@ -53,7 +53,11 @@
 
 -define(BLOCK_SIZE, 65536).
 
--type config() :: {Username::binary() | string(), Password::binary() | string()}.
+-type config() :: #{
+        username := binary() | string(),
+        password := binary() | string(),
+        tls_options => list()
+    }.
 -type url() :: binary() | string().
 -type ready_fun() :: undefined | {atom(),atom(),list()} | fun() | pid().
 -type stream_fun() :: {atom(),atom(),list()} | fun() | pid().
