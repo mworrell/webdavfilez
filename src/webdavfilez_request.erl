@@ -1,9 +1,9 @@
 %% @doc WebDAV http request handler and streamer using httpc.
 %% @author Marc Worrell
-%% @copyright 2022-2023 Marc Worrell
+%% @copyright 2022-2025 Marc Worrell
 %% @end
 
-%% Copyright 2022-2023 Marc Worrell
+%% Copyright 2022-2025 Marc Worrell
 %%
 %% This file is provided to you under the Apache License,
 %% Version 2.0 (the "License"); you may not use this file
@@ -49,7 +49,7 @@ request(Config, Method, Url, Headers, Options) ->
                 | Headers
             ],
             httpc:request(Method, {to_list(Url), AllHeaders},
-                          opts(Host), [{body_format, binary}|Options],
+                          opts(Host, Config), [{body_format, binary}|Options],
                           httpc_webdavfilez_profile);
         {error, _} = Error ->
             Error
@@ -68,7 +68,7 @@ request_with_body(Config, Method, Url, Headers, Body) ->
             jobs:run(webdavfilez_jobs,
                      fun() ->
                         httpc:request(Method, {to_list(Url), Hs1, ContentType, Body},
-                                      opts(Host), [],
+                                      opts(Host, Config), [],
                                       httpc_webdavfilez_profile)
                     end);
         {error, _} = Error ->
@@ -184,14 +184,16 @@ http_status({{_,Code,_}, _Headers, _Body}) ->
     {error, Code}.
 
 
-opts(Host) ->
+opts(Host, Config) ->
     [
         {connect_timeout, ?CONNECT_TIMEOUT},
-        {ssl, ssl_options(Host)},
+        {ssl, tls_options(Host, Config)},
         {timeout, ?TIMEOUT}
     ].
 
-ssl_options(Host) ->
+tls_options(_Host, #{ tls_options := Options }) when is_list(Options), Options =/= [] ->
+    Options;
+tls_options(Host, _Config) ->
     case z_ip_address:is_local_name(Host) of
         true ->
             [ {verify, verify_none} ];
@@ -199,7 +201,7 @@ ssl_options(Host) ->
             tls_certificate_check:options(Host)
     end.
 
-basic_auth({Username, Password}) ->
+basic_auth(#{ username := Username, password := Password }) ->
     Username1 = unicode:characters_to_binary(Username),
     Password1 = unicode:characters_to_binary(Password),
     "Basic " ++ base64:encode_to_string(<<Username1/binary, $:, Password1/binary>>).

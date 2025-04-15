@@ -29,7 +29,7 @@ Erlang/OTP 23 [erts-11.1] [source] [64-bit] [smp:12:12] [ds:12:12:10] [async-thr
 Eshell V11.1  (abort with ^G)
 1> application:ensure_all_started(webdavfilez).
 {ok,[jobs,webdavfilez]}
-2> Cfg = {<<"username">>, <<"password">>}.
+2> Cfg = #{ username => <<"username">>, password => <<"password">> }.
 {<<"username">>, <<"password">>}
 3> webdavfilez:put(Cfg, <<"https://my.storage-server.com/foo/LICENSE">>, {filename, "LICENSE"}).
 ok
