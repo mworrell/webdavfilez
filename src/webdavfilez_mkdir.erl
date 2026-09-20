@@ -26,6 +26,9 @@
     parent_dir/1
     ]).
 
+%% Preserve Hackney 1.x's receive timeout; Hackney 4 defaults to infinity.
+-define(RECV_TIMEOUT, 5000).
+
 % Dir not there: 409
 % Make dir that exists: 405
 
@@ -49,7 +52,7 @@ mkcol(Cfg, Url) ->
     Hs = [
         {<<"Authorization">>, to_bin(webdavfilez_request:basic_auth(Cfg))}
     ],
-    case hackney:request(mkcol, Url, Hs, <<>>, [ with_body ]) of
+    case hackney:request(mkcol, Url, Hs, <<>>, [{recv_timeout, ?RECV_TIMEOUT}]) of
         {ok, Status, _RespHs, _RespBody} when Status >= 200, Status =< 299 ->
             ok;
         {ok, 401, _RespHs, _RespBody} ->
@@ -78,7 +81,7 @@ check_if_exists(Cfg, Url) ->
 <a:propfind xmlns:a=\"DAV:\">
 <a:prop><a:resourcetype/></a:prop>
 </a:propfind>">>,
-    case hackney:request(propfind, Url, Hs, ReqBody, [ with_body ]) of
+    case hackney:request(propfind, Url, Hs, ReqBody, [{recv_timeout, ?RECV_TIMEOUT}]) of
         {ok, 207, _, _} ->
             ok;
         {ok, 404, _, _} ->
